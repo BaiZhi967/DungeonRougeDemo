@@ -203,6 +203,8 @@ public class RoomNodeGraphEditor : EditorWindow
     {
         GenericMenu menu = new GenericMenu();
         menu.AddItem(new GUIContent("创建房间节点"), false, CreateRoomNode, MousePosition);
+        menu.AddSeparator("");
+        menu.AddItem(new GUIContent("选择所有的节点"), false, SelectAllRoomNodes);
         menu.ShowAsContext();
     }
 
@@ -251,6 +253,18 @@ public class RoomNodeGraphEditor : EditorWindow
                 GUI.changed = true;
             }
         }
+    }
+    
+    /// <summary>
+    /// 选择所有的节点
+    /// </summary>
+    private void SelectAllRoomNodes()
+    {
+        foreach (RoomNodeSO roomNode in _currentRoomNodeGraph.roomNodeList)
+        {
+            roomNode.isSelected = true;
+        }
+        GUI.changed = true;
     }
 
     /// <summary>
