@@ -219,9 +219,79 @@ public class RoomNodeSO : ScriptableObject
     /// </summary>
     public bool AddChildRoomNodeIDToRoomNode(string childID)
     {
-        childRoomNodeIDList.Add(childID);
-        return true;
+        // 判断childID是否可以合法的添加
+        // 如果可以则返回true，否则返回false
+        if(IsChildRoomValid(childID))
+        {
+            childRoomNodeIDList.Add(childID);
+            return true;
+        }
+        return false;
     }
+    
+    /// <summary>
+    /// 判断子节点能否被合法的添加到父节点中 如果可以返回true 否则范围false
+    /// </summary>
+    public bool IsChildRoomValid(string childID)
+    {
+        bool isConnectedBossNodeAlready = false;
+        // 判断 是否存在BOSS房节点 并且BOSS房节点已经连接
+        foreach (RoomNodeSO roomNode in roomNodeGraph.roomNodeList)
+        {
+            if (roomNode.roomNodeType.isBossRoom && roomNode.parentRoomNodeIDList.Count > 0)
+                isConnectedBossNodeAlready = true;
+        }
+
+        // 如果子节点是BOSS节点 并且BOSS节点已经连接 则返回false
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isBossRoom && isConnectedBossNodeAlready)
+            return false;
+
+        // 如果子节点的类型为None 则返回false
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isNone)
+            return false;
+
+        // 如果已经包含了该子节点 则返回false
+        if (childRoomNodeIDList.Contains(childID))
+            return false;
+
+        // 如果节点与自身相同 返回false
+        if (id == childID)
+            return false;
+
+        // 如果子节点是自己的父节点返回false
+        if (parentRoomNodeIDList.Contains(childID))
+            return false;
+
+        // 如果子节点已经有了父节点返回false
+        if (roomNodeGraph.GetRoomNode(childID).parentRoomNodeIDList.Count > 0)
+            return false;
+
+        // 如果子节点和当前节点都为走廊(Corridor) 返回false
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && roomNodeType.isCorridor)
+            return false;
+
+        // 如果子节点不是走廊(Corridor) 并且当前节点不是走廊(Corridor) 返回false
+        if (!roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && !roomNodeType.isCorridor)
+            return false;
+
+        // 如果子节点是走廊(Corridor) 并且当前节的子节点数量超过最大子节点数 返回false
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && childRoomNodeIDList.Count >= Settings.MaxChildCorridors)
+            return false;
+
+        // 如果子节点是入口节点 则返回false -入口节点不存在父节点
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isEntrance)
+            return false;
+
+        // 如果将房间添加到走廊，请检查该走廊节点是否尚未添加房间
+        if (!roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && childRoomNodeIDList.Count > 0)
+            return false;
+
+        return true;
+
+
+
+    }
+
 
     /// <summary>
     /// 添加parentID到节点（已添加则返回true，否则返回false）

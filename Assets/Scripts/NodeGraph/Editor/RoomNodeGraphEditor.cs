@@ -71,7 +71,7 @@ public class RoomNodeGraphEditor : EditorWindow
             OpenWindow();
 
             _currentRoomNodeGraph = roomNodeGraph;
-
+            
             return true;
         }
         return false;

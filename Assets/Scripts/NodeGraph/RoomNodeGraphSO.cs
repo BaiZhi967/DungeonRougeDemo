@@ -28,6 +28,18 @@ public class RoomNodeGraphSO : ScriptableObject
           }
      }
      
+     /// <summary>
+     /// 通过nodeID获取房间节点
+     /// </summary>
+     public RoomNodeSO GetRoomNode(string roomNodeID)
+     {
+          if (roomNodeDictionary.TryGetValue(roomNodeID, out RoomNodeSO roomNode))
+          {
+               return roomNode;
+          }
+          return null;
+     }
+     
      #region Editor Code
 
      // 以下代码只能在 Unity 编辑器中运行
