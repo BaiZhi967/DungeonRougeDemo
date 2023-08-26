@@ -18,6 +18,10 @@ public class RoomNodeGraphEditor : EditorWindow
     private const float NodeHeight = 75f;
     private const int NodePadding = 25;
     private const int NodeBorder = 12;
+    
+    // 连线属性
+    private const float ConnectingLineWidth = 3f;
+    private const float ConnectingLineArrowSize = 6f;
 
     [MenuItem("Window/Room Node Graph")]
     public static void OpenWindow()
@@ -61,9 +65,16 @@ public class RoomNodeGraphEditor : EditorWindow
     /// </summary>
     private void OnGUI()
     {
+        //如果已选择 RoomNodeGraphSO 类型的可编写脚本的对象，则处理
         if (_currentRoomNodeGraph is not null)
         {
+            // 如果被拖动则画线
+            DrawDraggedLine();
+            //处理事件
             ProcessEvents(Event.current);
+            // 绘制两个房间节点间的线
+            DrawRoomConnections();
+            //绘制房间节点
             DrawRoomNodes();
         }
 
@@ -73,6 +84,16 @@ public class RoomNodeGraphEditor : EditorWindow
         }
     }
     
+    private void DrawDraggedLine()
+    {
+        if (_currentRoomNodeGraph.linePosition != Vector2.zero)
+        {
+            //从节点位置绘制一条线
+            Handles.DrawBezier(_currentRoomNodeGraph.roomNodeToDrawLineFrom.rect.center, _currentRoomNodeGraph.linePosition, 
+                _currentRoomNodeGraph.roomNodeToDrawLineFrom.rect.center, _currentRoomNodeGraph.linePosition,
+                Color.white, null, ConnectingLineWidth);
+        }
+    }
     
 
 
@@ -84,8 +105,8 @@ public class RoomNodeGraphEditor : EditorWindow
             _currentRoomNode = IsMouseOverRoomNode(currentEvent);
         }
 
-        // 如果鼠标不在房间节点上
-        if (_currentRoomNode is null)
+        // 如果鼠标不在房间节点上或者我们当前正在从房间节点拖动一条线，然后处理图形事件
+        if (_currentRoomNode is null || _currentRoomNodeGraph.roomNodeToDrawLineFrom is not null)
         {
             ProcessRoomNodeGraphEvents(currentEvent);
         }
@@ -106,8 +127,19 @@ public class RoomNodeGraphEditor : EditorWindow
     {
         switch (currentEvent.type)
         {
+            //鼠标按下
             case EventType.MouseDown:
                 ProcessMouseDownEvent(currentEvent);
+                break;
+            // 鼠标松开
+            case EventType.MouseUp:
+                ProcessMouseUpEvent(currentEvent);
+                break;
+
+            // 鼠标拖拽
+            case EventType.MouseDrag:
+                ProcessMouseDragEvent(currentEvent);
+
                 break;
             default:
                 break;
@@ -167,11 +199,138 @@ public class RoomNodeGraphEditor : EditorWindow
         AssetDatabase.AddObjectToAsset(roomNode, _currentRoomNodeGraph);
 
         AssetDatabase.SaveAssets();
-
+        // 更新节点字典
+        _currentRoomNodeGraph.OnValidate();
         
     }
 
-    
+    /// <summary>
+    /// 处理鼠标抬起事件
+    /// </summary>
+    private void ProcessMouseUpEvent(Event currentEvent)
+    {
+        // 如果松开鼠标右键并当前拖动一条线
+        if (currentEvent.button == 1 && _currentRoomNodeGraph.roomNodeToDrawLineFrom is not null)
+        {
+            // 判断是否在一个节点上
+            RoomNodeSO roomNode = IsMouseOverRoomNode(currentEvent);
+
+            if (roomNode is not null)
+            {
+                // 如果可以的话将其设置为父房间节点的子节点（如果可以添加）
+                if (_currentRoomNodeGraph.roomNodeToDrawLineFrom.AddChildRoomNodeIDToRoomNode(roomNode.id))
+                {
+                    // 在子房间节点设置父ID
+                    roomNode.AddParentRoomNodeIDToRoomNode(_currentRoomNodeGraph.roomNodeToDrawLineFrom.id);
+                }
+            }
+
+            ClearLineDrag();
+        }
+    }
+
+
+    /// <summary>
+    /// 处理鼠标拖拽事件
+    /// </summary>
+    private void ProcessMouseDragEvent(Event currentEvent)
+    {
+        // 处理右键拖动事件-画线
+        if (currentEvent.button == 1)
+        {
+            ProcessRightMouseDragEvent(currentEvent);
+        }
+
+    }
+
+    /// <summary>
+    /// 处理右键拖动事件-画线
+    /// </summary>
+    private void ProcessRightMouseDragEvent(Event currentEvent)
+    {
+        if (_currentRoomNodeGraph.roomNodeToDrawLineFrom is not null)
+        {
+            DragConnectingLine(currentEvent.delta);
+            GUI.changed = true;
+        }
+    }
+
+    /// <summary>
+    /// 从房间节点拖动连接线
+    /// </summary>
+    public void DragConnectingLine(Vector2 delta)
+    {
+        _currentRoomNodeGraph.linePosition += delta;
+    }
+
+    /// <summary>
+    /// 从房间节点清除线拖动
+    /// </summary>
+    private void ClearLineDrag()
+    {
+        _currentRoomNodeGraph.roomNodeToDrawLineFrom = null;
+        _currentRoomNodeGraph.linePosition = Vector2.zero;
+        GUI.changed = true;
+    }
+
+    /// <summary>
+    /// 在窗口中绘制房间节点之间的连接
+    /// </summary>
+    private void DrawRoomConnections()
+    {
+        // 循环遍历所有房间节点
+        foreach (RoomNodeSO roomNode in _currentRoomNodeGraph.roomNodeList)
+        {
+            if (roomNode.childRoomNodeIDList.Count > 0)
+            {
+                // 循环遍历子房间节点
+                foreach (string childRoomNodeID in roomNode.childRoomNodeIDList)
+                {
+                    // 从字典中获取子房间节点
+                    if (_currentRoomNodeGraph.roomNodeDictionary.ContainsKey(childRoomNodeID))
+                    {
+                        DrawConnectionLine(roomNode, _currentRoomNodeGraph.roomNodeDictionary[childRoomNodeID]);
+
+                        GUI.changed = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 绘制父房间节点和子房间节点之间的连接线
+    /// </summary>
+    private void DrawConnectionLine(RoomNodeSO parentRoomNode, RoomNodeSO childRoomNode)
+    {
+        //获取线的起始位置和结束位置
+        Vector2 startPosition = parentRoomNode.rect.center;
+        Vector2 endPosition = childRoomNode.rect.center;
+        
+        // 计算线的中间位置
+        Vector2 midPosition = (endPosition + startPosition) / 2f;
+
+        // 线从起始位置到结束位置向量
+        Vector2 direction = endPosition - startPosition;
+
+        // 计算从中点开始的标准化垂直位置
+        Vector2 arrowTailPoint1 = midPosition - new Vector2(-direction.y, direction.x).normalized * ConnectingLineArrowSize;
+        Vector2 arrowTailPoint2 = midPosition + new Vector2(-direction.y, direction.x).normalized * ConnectingLineArrowSize;
+
+        // 计算箭头的中点偏移位置
+        Vector2 arrowHeadPoint = midPosition + direction.normalized * ConnectingLineArrowSize;
+
+        // 画箭头
+        Handles.DrawBezier(arrowHeadPoint, arrowTailPoint1, arrowHeadPoint, arrowTailPoint1,
+            Color.white, null, ConnectingLineArrowSize);
+        Handles.DrawBezier(arrowHeadPoint, arrowTailPoint2, arrowHeadPoint, arrowTailPoint2,
+            Color.white, null, ConnectingLineArrowSize);
+
+        // 画线
+        Handles.DrawBezier(startPosition, endPosition, startPosition, endPosition, Color.white, null, ConnectingLineArrowSize);
+
+        GUI.changed = true;
+    }
     
     /// <summary>
     /// 绘制节点

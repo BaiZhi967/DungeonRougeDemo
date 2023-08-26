@@ -113,6 +113,10 @@ public class RoomNodeSO : ScriptableObject
         if (currentEvent.button == 0)
         {
             ProcessLeftClickDownEvent();
+        }//右键鼠标
+        else if (currentEvent.button == 1)
+        {
+            ProcessRightClickDownEvent(currentEvent);
         }
 
     }
@@ -133,6 +137,15 @@ public class RoomNodeSO : ScriptableObject
         {
             isSelected = true;
         }
+    }
+    
+    /// <summary>
+    /// 处理鼠标右键点击事件
+    /// </summary>
+    /// <param name="currentEvent"></param>
+    private void ProcessRightClickDownEvent(Event currentEvent)
+    {
+        roomNodeGraph.SetNodeToDrawConnectionLineFrom(this, currentEvent.mousePosition);
     }
 
     /// <summary>
@@ -189,6 +202,24 @@ public class RoomNodeSO : ScriptableObject
     {
         rect.position += delta;
         EditorUtility.SetDirty(this);
+    }
+    
+    /// <summary>
+    /// 将childID添加到节点（如果已添加节点则返回true，否则返回false）
+    /// </summary>
+    public bool AddChildRoomNodeIDToRoomNode(string childID)
+    {
+        childRoomNodeIDList.Add(childID);
+        return true;
+    }
+
+    /// <summary>
+    /// 添加parentID到节点（已添加则返回true，否则返回false）
+    /// </summary>
+    public bool AddParentRoomNodeIDToRoomNode(string parentID)
+    {
+        parentRoomNodeIDList.Add(parentID);
+        return true;
     }
 
 
