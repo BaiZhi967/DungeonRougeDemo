@@ -8,7 +8,7 @@ using UnityEngine;
 public class RoomNodeGraphEditor : EditorWindow
 {
     private GUIStyle _roomNodeStyle;
-
+    private GUIStyle _roomNodeSelectedStyle;
     private static RoomNodeGraphSO _currentRoomNodeGraph;
     private RoomNodeSO _currentRoomNode = null;
     private RoomNodeTypeListSO _roomNodeTypeListSo = null;
@@ -31,19 +31,36 @@ public class RoomNodeGraphEditor : EditorWindow
 
     private void OnEnable()
     {
+        // 监视器选择更改事件
+        Selection.selectionChanged += InspectorSelectionChanged;
+        
+        //默认节点样式
         _roomNodeStyle = new GUIStyle();
         _roomNodeStyle.normal.background = EditorGUIUtility.Load("node1") as Texture2D;
         _roomNodeStyle.normal.textColor = Color.white;
         _roomNodeStyle.padding = new RectOffset(NodePadding, NodePadding, NodePadding, NodePadding);
         _roomNodeStyle.border = new RectOffset(NodeBorder, NodeBorder, NodeBorder, NodeBorder);
+        // 默认选中节点样式
+        _roomNodeSelectedStyle = new GUIStyle();
+        _roomNodeSelectedStyle.normal.background = EditorGUIUtility.Load("node1 on") as Texture2D;
+        _roomNodeSelectedStyle.normal.textColor = Color.white;
+        _roomNodeSelectedStyle.padding = new RectOffset(NodePadding, NodePadding, NodePadding, NodePadding);
+        _roomNodeSelectedStyle.border = new RectOffset(NodeBorder, NodeBorder, NodeBorder, NodeBorder);
+
 
         _roomNodeTypeListSo = GameResources.Instance.roomNodeTypeList;
 
     }
+    
+    private void OnDisable()
+    {
+        // 监视器选择更改事件
+        Selection.selectionChanged -= InspectorSelectionChanged;
+    }
+    
     /// <summary>
     /// 如果在检查器中双击房间节点图可编写脚本的对象资源，则绘制房间节点图编辑器窗口
     /// </summary>
-
     [OnOpenAsset(0)]  
     public static bool OnDoubleClickAsset(int instanceID, int line)
     {
@@ -165,12 +182,23 @@ public class RoomNodeGraphEditor : EditorWindow
 
     private void ProcessMouseDownEvent(Event currentEvent)
     {
+        //右键 - 打开菜单
         if (currentEvent.button == 1)
         {
             ShowContextMenu(currentEvent.mousePosition);
         }
+        // 左键
+        else if (currentEvent.button == 0)
+        {
+            ClearLineDrag();
+            ClearAllSelectedRoomNodes();
+        }
     }
 
+    /// <summary>
+    /// 打开菜单
+    /// </summary>
+    /// <param name="MousePosition"></param>
     private void ShowContextMenu(Vector2 MousePosition)
     {
         GenericMenu menu = new GenericMenu();
@@ -180,6 +208,11 @@ public class RoomNodeGraphEditor : EditorWindow
 
     private void CreateRoomNode(object MousePosition)
     {
+        //如果当前没有房间节点，则创建入口节点
+        if (_currentRoomNodeGraph.roomNodeList.Count <= 0)
+        {
+            CreateRoomNode(new Vector2(100f,100f),_roomNodeTypeListSo.list.Find(x => x.isEntrance));
+        }
         CreateRoomNode(MousePosition,_roomNodeTypeListSo.list.Find(x => x.isNone));
     }
     private void CreateRoomNode(object MousePosition,RoomNodeTypeSO roomNodeType)
@@ -202,6 +235,22 @@ public class RoomNodeGraphEditor : EditorWindow
         // 更新节点字典
         _currentRoomNodeGraph.OnValidate();
         
+    }
+    
+    /// <summary>
+    ///  清楚选中状态
+    /// </summary>
+    private void ClearAllSelectedRoomNodes()
+    {
+        foreach (RoomNodeSO roomNode in _currentRoomNodeGraph.roomNodeList)
+        {
+            if (roomNode.isSelected)
+            {
+                roomNode.isSelected = false;
+
+                GUI.changed = true;
+            }
+        }
     }
 
     /// <summary>
@@ -337,11 +386,34 @@ public class RoomNodeGraphEditor : EditorWindow
     /// </summary>
     private void DrawRoomNodes()
     {
+        //遍历全部的房间节点并绘制
         foreach (var roomNode in _currentRoomNodeGraph.roomNodeList)
         {
-            roomNode.Draw(_roomNodeStyle);
+            if (roomNode.isSelected)
+            {
+                roomNode.Draw(_roomNodeSelectedStyle);
+            }
+            else
+            {
+                roomNode.Draw(_roomNodeStyle);
+            }
+            
         }
 
         GUI.changed = true;
+    }
+    
+    /// <summary>
+    /// 检查器中的选择已更改
+    /// </summary>
+    private void InspectorSelectionChanged()
+    {
+        RoomNodeGraphSO roomNodeGraph = Selection.activeObject as RoomNodeGraphSO;
+
+        if (roomNodeGraph != null)
+        {
+            _currentRoomNodeGraph = roomNodeGraph;
+            GUI.changed = true;
+        }
     }
 }

@@ -1,32 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-1008959528136481368
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5097a54b334da2e4da12e6129d341326, type: 3}
-  m_Name: RoomNode
-  m_EditorClassIdentifier: 
-  id: a70dc317-84ab-4032-b55d-4d0f2e4a1bad
-  parentRoomNodeIDList:
-  - 8d2d9012-56c4-4686-b769-686b76a486a9
-  childRoomNodeIDList: []
-  roomNodeGraph: {fileID: 11400000}
-  roomNodeType: {fileID: 11400000, guid: 72b9b5e7eea9526469e3833be249731e, type: 2}
-  roomNodeTypeList: {fileID: 11400000, guid: 895a118cd61726142af8a542b0f5baa8, type: 2}
-  rect:
-    serializedVersion: 2
-    x: 647
-    y: 268
-    width: 160
-    height: 75
-  isLeftClickDragging: 0
-  isSelected: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40,35 +13,6 @@ MonoBehaviour:
   m_Name: RoomNodeGraph
   m_EditorClassIdentifier: 
   roomNodeTypeList: {fileID: 0}
-  roomNodeList:
-  - {fileID: 6315482698769611495}
-  - {fileID: -1008959528136481368}
+  roomNodeList: []
   roomNodeToDrawLineFrom: {fileID: 0}
   linePosition: {x: 0, y: 0}
---- !u!114 &6315482698769611495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5097a54b334da2e4da12e6129d341326, type: 3}
-  m_Name: RoomNode
-  m_EditorClassIdentifier: 
-  id: 8d2d9012-56c4-4686-b769-686b76a486a9
-  parentRoomNodeIDList: []
-  childRoomNodeIDList:
-  - a70dc317-84ab-4032-b55d-4d0f2e4a1bad
-  roomNodeGraph: {fileID: 11400000}
-  roomNodeType: {fileID: 11400000, guid: 0e484447235c7eb48b7e5cc49c4566a2, type: 2}
-  roomNodeTypeList: {fileID: 11400000, guid: 895a118cd61726142af8a542b0f5baa8, type: 2}
-  rect:
-    serializedVersion: 2
-    x: 276
-    y: 271
-    width: 160
-    height: 75
-  isLeftClickDragging: 0
-  isSelected: 0

@@ -47,12 +47,22 @@ public class RoomNodeSO : ScriptableObject
         // 启动区域以检测弹出选择更改
         EditorGUI.BeginChangeCheck();
 
-        // 使用可以从中选择的 RoomNodeType 名称值显示弹出窗口（默认为当前设置的 roomNodeType）
-        int selected = roomNodeTypeList.list.FindIndex(x => x == roomNodeType);
+        //如果节点有父节点或节点是入口节点
+        if (parentRoomNodeIDList.Count > 0 || roomNodeType.isEntrance)
+        { 
+            EditorGUILayout.LabelField(roomNodeType.roomNodeTypeName);
+        }
+        else
+        {
+            // 使用可以从中选择的 RoomNodeType 名称值显示弹出窗口（默认为当前设置的 roomNodeType）
+            var selected = roomNodeTypeList.list.FindIndex(x => x == roomNodeType);
 
-        int selection = EditorGUILayout.Popup("", selected, GetRoomNodeTypesToDisplay());
+            var selection = EditorGUILayout.Popup("", selected, GetRoomNodeTypesToDisplay());
 
-        roomNodeType = roomNodeTypeList.list[selection];
+            roomNodeType = roomNodeTypeList.list[selection];
+        }
+
+        
 
         if (EditorGUI.EndChangeCheck())
             EditorUtility.SetDirty(this);
