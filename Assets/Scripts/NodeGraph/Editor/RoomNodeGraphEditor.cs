@@ -205,6 +205,10 @@ public class RoomNodeGraphEditor : EditorWindow
         menu.AddItem(new GUIContent("创建房间节点"), false, CreateRoomNode, MousePosition);
         menu.AddSeparator("");
         menu.AddItem(new GUIContent("选择所有的节点"), false, SelectAllRoomNodes);
+        menu.AddSeparator("");
+        menu.AddItem(new GUIContent("删除选中房间节点的连接"), false, DeleteSelectedRoomNodeLinks);
+        menu.AddItem(new GUIContent("删除选中的房间节点"), false, DeleteSelectedRoomNodes);
+
         menu.ShowAsContext();
     }
 
@@ -237,6 +241,102 @@ public class RoomNodeGraphEditor : EditorWindow
         // 更新节点字典
         _currentRoomNodeGraph.OnValidate();
         
+    }
+    
+    /// <summary>
+    /// 删除选中的房间节点
+    /// </summary>
+    private void DeleteSelectedRoomNodes()
+    {
+        Queue<RoomNodeSO> roomNodeDeletionQueue = new Queue<RoomNodeSO>();
+
+        // 遍历所有的节点
+        foreach (RoomNodeSO roomNode in _currentRoomNodeGraph.roomNodeList)
+        {
+            //如果节点被选中并且不是入口节点
+            if (roomNode.isSelected && !roomNode.roomNodeType.isEntrance)
+            {
+                roomNodeDeletionQueue.Enqueue(roomNode);
+
+                // 迭代遍历节点的子节点
+                foreach (string childRoomNodeID in roomNode.childRoomNodeIDList)
+                {
+                    // 检索子房间节点
+                    RoomNodeSO childRoomNode = _currentRoomNodeGraph.GetRoomNode(childRoomNodeID);
+
+                    if (childRoomNode is not null)
+                    {
+                        // 从子房间节点中删除parentID
+                        childRoomNode.RemoveParentRoomNodeIDFromRoomNode(roomNode.id);
+                    }
+                }
+
+                // 迭代遍历节点的父节点
+                foreach (string parentRoomNodeID in roomNode.parentRoomNodeIDList)
+                {
+                    // 移除父节点
+                    RoomNodeSO parentRoomNode = _currentRoomNodeGraph.GetRoomNode(parentRoomNodeID);
+
+                    if (parentRoomNode is not null)
+                    {
+                        // 从子节点中删除parentID
+                        parentRoomNode.RemoveChildRoomNodeIDFromRoomNode(roomNode.id);
+                    }
+                }
+            }
+        }
+
+        // 删除队列里面的所有节点
+        while (roomNodeDeletionQueue.Count > 0)
+        {
+            // 从队列中取出一个节点
+            RoomNodeSO roomNodeToDelete = roomNodeDeletionQueue.Dequeue();
+
+            // 从字典中移除节点
+            _currentRoomNodeGraph.roomNodeDictionary.Remove(roomNodeToDelete.id);
+
+            // 从列表中移除节点
+            _currentRoomNodeGraph.roomNodeList.Remove(roomNodeToDelete);
+
+            // 在资源里删除节点
+            DestroyImmediate(roomNodeToDelete, true);
+
+            // 保存删除操作
+            AssetDatabase.SaveAssets();
+
+        }
+    }
+
+    /// <summary>
+    /// 删除选中的节点之间的联系
+    /// </summary>
+    private void DeleteSelectedRoomNodeLinks()
+    {
+        // 迭代遍历全部节点
+        foreach (RoomNodeSO roomNode in _currentRoomNodeGraph.roomNodeList)
+        {
+            if (roomNode.isSelected && roomNode.childRoomNodeIDList.Count > 0)
+            {
+                for (int i = roomNode.childRoomNodeIDList.Count - 1; i >= 0; i--)
+                {
+                    // 获取子节点
+                    RoomNodeSO childRoomNode = _currentRoomNodeGraph.GetRoomNode(roomNode.childRoomNodeIDList[i]);
+
+                    // 如果子节点被选中了
+                    if (childRoomNode is not null && childRoomNode.isSelected)
+                    {
+                        // 从父节点中移除子节点
+                        roomNode.RemoveChildRoomNodeIDFromRoomNode(childRoomNode.id);
+
+                        // 从子节点中移除父节点
+                        childRoomNode.RemoveParentRoomNodeIDFromRoomNode(roomNode.id);
+                    }
+                }
+            }
+        }
+
+        // 清空选中节点
+        ClearAllSelectedRoomNodes();
     }
     
     /// <summary>

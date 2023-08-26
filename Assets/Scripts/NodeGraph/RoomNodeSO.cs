@@ -60,6 +60,31 @@ public class RoomNodeSO : ScriptableObject
             var selection = EditorGUILayout.Popup("", selected, GetRoomNodeTypesToDisplay());
 
             roomNodeType = roomNodeTypeList.list[selection];
+            // 如果房间类型选择发生更改，则子连接可能无效
+            if (roomNodeTypeList.list[selected].isCorridor && !roomNodeTypeList.list[selection].isCorridor || 
+                !roomNodeTypeList.list[selected].isCorridor && roomNodeTypeList.list[selection].isCorridor || 
+                !roomNodeTypeList.list[selected].isBossRoom && roomNodeTypeList.list[selection].isBossRoom)
+            {
+                // 如果房间节点类型已更改并且它已经有子节点，则删除父子节点链接，因为我们需要重新验证任何房间节点类型
+                if (childRoomNodeIDList.Count > 0)
+                {
+                    for (int i = childRoomNodeIDList.Count - 1; i >= 0; i--)
+                    {
+                        // 获取子节点
+                        RoomNodeSO childRoomNode = roomNodeGraph.GetRoomNode(childRoomNodeIDList[i]);
+
+                        // If the child room node is not null
+                        if (childRoomNode is not null)
+                        {
+                            // 从该节点删除子节点
+                            RemoveChildRoomNodeIDFromRoomNode(childRoomNode.id);
+
+                            // 从子节点中删除父节点
+                            childRoomNode.RemoveParentRoomNodeIDFromRoomNode(id);
+                        }
+                    }
+                }
+            }
         }
 
         
@@ -296,10 +321,42 @@ public class RoomNodeSO : ScriptableObject
     /// <summary>
     /// 添加parentID到节点（已添加则返回true，否则返回false）
     /// </summary>
+    /// <param name="parentID">父节点ID</param>
+    /// <returns></returns>
     public bool AddParentRoomNodeIDToRoomNode(string parentID)
     {
         parentRoomNodeIDList.Add(parentID);
         return true;
+    }
+    
+    /// <summary>
+    /// 从当前节点中删除子节点 (删除成功返回true，否则返回false)
+    /// </summary>
+    /// <param name="childID">子节点ID</param>
+    /// <returns></returns>
+    public bool RemoveChildRoomNodeIDFromRoomNode(string childID)
+    {
+        // 如果childID在子节点列表中 返回true
+        if (childRoomNodeIDList.Contains(childID))
+        {
+            childRoomNodeIDList.Remove(childID);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 从当前节点中删除父节点 (删除成功返回true，否则返回false)
+    /// </summary>
+    public bool RemoveParentRoomNodeIDFromRoomNode(string parentID)
+    {
+        // 如果parentID在parentRoomNodeIDList中，则删除它
+        if (parentRoomNodeIDList.Contains(parentID))
+        {
+            parentRoomNodeIDList.Remove(parentID);
+            return true;
+        }
+        return false;
     }
 
 
