@@ -5,8 +5,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "RoomNodeGraph", menuName = "Room/RoomNodeGraph")]
 public class RoomNodeGraphSO : ScriptableObject
 {
-    [HideInInspector] public RoomNodeTypeListSO roomNodeTypeList;
-    [HideInInspector] public List<RoomNodeSO> roomNodeList = new List<RoomNodeSO>();
-    [HideInInspector] public Dictionary<string, RoomNodeSO> roomNodeDictionary = new Dictionary<string, RoomNodeSO>();
+     public RoomNodeTypeListSO roomNodeTypeList;
+     public List<RoomNodeSO> roomNodeList = new List<RoomNodeSO>();
+     public Dictionary<string, RoomNodeSO> roomNodeDictionary = new Dictionary<string, RoomNodeSO>();
     
 }
