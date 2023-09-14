@@ -300,7 +300,7 @@ public class RoomNodeSO : ScriptableObject
             return false;
 
         // 如果子节点是走廊(Corridor) 并且当前节的子节点数量超过最大子节点数 返回false
-        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && childRoomNodeIDList.Count >= Settings.MaxChildCorridors)
+        if (roomNodeGraph.GetRoomNode(childID).roomNodeType.isCorridor && childRoomNodeIDList.Count >= Settings.maxChildCorridors)
             return false;
 
         // 如果子节点是入口节点 则返回false -入口节点不存在父节点
